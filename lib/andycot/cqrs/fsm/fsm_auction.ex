@@ -163,14 +163,14 @@ defmodule Andycot.FsmAuction do
 		# A bid was placed on an auction that already has at least one bid
 		defevent bid_placed(event, mode), state: state, data: fsm_data = %FsmAuctionData{sale_type_id: 1, bids: [_h|_t]} do
 
-	 		highest_bid = hd(fsm_data.bids)
-	 		{time_extended, time_extended_fsm_data} = maybe_extend_time(fsm_data)
+			highest_bid = hd(fsm_data.bids)
+			{time_extended, time_extended_fsm_data} = maybe_extend_time(fsm_data)
 
-	 		new_fsm_data = cond do
+			new_fsm_data = cond do
 
-	 			event.bidder_id == highest_bid.bidder_id and time_extended_fsm_data.reserve_price == nil ->
-		 			# The current highest bidder wants to raise its max bid price.
-		 			# The auction's current price doesn't change, and the new bid isn't visible
+				event.bidder_id == highest_bid.bidder_id and time_extended_fsm_data.reserve_price == nil ->
+					# The current highest bidder wants to raise its max bid price.
+					# The auction's current price doesn't change, and the new bid isn't visible
 					new_bid = make_bid_from_event(event, %{	is_visible: false, 
 																									is_auto: false, 
 																									time_extended: time_extended,
@@ -180,9 +180,9 @@ defmodule Andycot.FsmAuction do
 					time_extended_fsm_data
 					|> update_current_price_and_bids(time_extended_fsm_data.current_price, [Map.from_struct(new_bid)])
 
-	 			event.bidder_id == highest_bid.bidder_id and time_extended_fsm_data.reserve_price != nil ->
-		 			# The current highest bidder wants to raise its max bid price.
-		 			#
+				event.bidder_id == highest_bid.bidder_id and time_extended_fsm_data.reserve_price != nil ->
+					# The current highest bidder wants to raise its max bid price.
+					#
 					# If the bid max value is >= reserve_price and its the first time we exceed the reserve price
 					# then the current_price is raised to reach the value of the reserve_price and the bid is visible.
 					{is_visible, new_current_price} = if event.max_value >= time_extended_fsm_data.reserve_price do
@@ -206,9 +206,9 @@ defmodule Andycot.FsmAuction do
 
 				event.max_value <= highest_bid.max_value ->
 					#
-		 			# Case of a bid that is greater than the current price AND lower than the highest bidder max bid
-		 			# The highest bidder keeps its position of highest bidder, and we raise the current price to the
-		 			# bid max value
+					# Case of a bid that is greater than the current price AND lower than the highest bidder max bid
+					# The highest bidder keeps its position of highest bidder, and we raise the current price to the
+					# bid max value
 					#
 					new_current_price = event.max_value
 
@@ -257,7 +257,7 @@ defmodule Andycot.FsmAuction do
 						time_extended_fsm_data
 						|> update_current_price_and_bids(new_current_price, [Map.from_struct(new_highest_bid), new_bid])
 					end
-	 		end
+			end
 
 			event 
 			|> Repo.persist_event(mode, new_fsm_data)
@@ -268,12 +268,12 @@ defmodule Andycot.FsmAuction do
 		# A bid was placed on a fixed price auction
 		defevent bid_placed(event, mode), state: state, data: fsm_data = %FsmAuctionData{sale_type_id: 2} do
 
-	 		new_stock = fsm_data.stock - event.requested_qty
+			new_stock = fsm_data.stock - event.requested_qty
 
-	 		new_fsm_data = cond do
+			new_fsm_data = cond do
 
-			 	new_stock == 0 ->
-		 			Logger.info("Auction #{fsm_data.auction_id} sold for a qty of #{event.requested_qty}, no remaining stock")
+				new_stock == 0 ->
+					Logger.info("Auction #{fsm_data.auction_id} sold for a qty of #{event.requested_qty}, no remaining stock")
 
 					new_bid = make_bid_from_event(event, %{is_visible: true, is_auto: false, value: event.max_value, created_at: now()})
 					
@@ -284,7 +284,7 @@ defmodule Andycot.FsmAuction do
 																			bids: [Map.from_struct(new_bid)]}
 
 				true ->
-		 			Logger.info("Auction #{fsm_data.auction_id} sold for a qty of #{event.requested_qty}, remaining stock is #{new_stock}, duplicate the auction")
+					Logger.info("Auction #{fsm_data.auction_id} sold for a qty of #{event.requested_qty}, remaining stock is #{new_stock}, duplicate the auction")
 
 					new_bid = make_bid_from_event(event, %{is_visible: true, is_auto: false, value: event.max_value, created_at: now()})
 
@@ -297,7 +297,7 @@ defmodule Andycot.FsmAuction do
 																			end_date_time: event.created_at, 
 																			bids: [Map.from_struct(new_bid)]}
 
-	 		end
+			end
 
 			event 
 			|> Repo.persist_event(mode, new_fsm_data)
@@ -610,12 +610,12 @@ defmodule Andycot.FsmAuction do
 
 	@doc """
 	"""
-  def add_amounts(value, bid_up) do
-  	{f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.add(D.new(value), D.new(bid_up)) end)
-  	|> D.to_string
-  	|> Float.parse
+	def add_amounts(value, bid_up) do
+		{f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.add(D.new(value), D.new(bid_up)) end)
+		|> D.to_string
+		|> Float.parse
 
-  	f
-  end
+		f
+	end
 
 end

@@ -90,7 +90,7 @@ defmodule Andycot.EventProcessor.User do
 	def apply_event(%AccountActivated{} = event, fsm, mode) do
 		Logger.info("User #{event.user_id}   applying event AccountActivated")
 
-    new_fsm = fsm |> Fsm.User.account_activated(event, mode)
+		new_fsm = fsm |> Fsm.User.account_activated(event, mode)
 
 		{:ok, new_fsm}
 	end
@@ -98,7 +98,7 @@ defmodule Andycot.EventProcessor.User do
 	def apply_event(%UserUnregistered{} = event, fsm, mode) do
 		Logger.info("User #{event.user_id}   applying event UserUnregistered")
 
-    new_fsm = fsm |> Fsm.User.user_unregistered(event, mode)
+		new_fsm = fsm |> Fsm.User.user_unregistered(event, mode)
 
 		{:ok, new_fsm}
 	end
@@ -106,7 +106,7 @@ defmodule Andycot.EventProcessor.User do
 	def apply_event(%AccountLocked{} = event, fsm, mode) do
 		Logger.info("User #{event.user_id}   applying event AccountLocked")
 
-    new_fsm = fsm |> Fsm.User.account_locked(event, mode)
+		new_fsm = fsm |> Fsm.User.account_locked(event, mode)
 
 		{:ok, new_fsm}
 	end
@@ -114,7 +114,7 @@ defmodule Andycot.EventProcessor.User do
 	def apply_event(%AccountUnlocked{} = event, fsm, mode) do
 		Logger.info("User #{event.user_id}   applying event AccountUnlocked")
 
-    new_fsm = fsm |> Fsm.User.account_unlocked(event, mode)
+		new_fsm = fsm |> Fsm.User.account_unlocked(event, mode)
 
 		{:ok, new_fsm}
 	end
@@ -122,7 +122,7 @@ defmodule Andycot.EventProcessor.User do
 	def apply_event(%AuctionWatched{} = event, fsm, mode) do
 		Logger.info("User #{event.user_id}   applying event AuctionWatched")
 
-    new_fsm = fsm |> Fsm.User.auction_watched(event, mode)
+		new_fsm = fsm |> Fsm.User.auction_watched(event, mode)
 
 		{:ok, new_fsm}
 	end
@@ -130,7 +130,7 @@ defmodule Andycot.EventProcessor.User do
 	def apply_event(%WatchRejected{} = event, fsm, mode) do
 		Logger.info("User #{event.user_id}   applying event WatchRejected")
 
-    new_fsm = fsm |> Fsm.User.watch_rejected(event, mode)
+		new_fsm = fsm |> Fsm.User.watch_rejected(event, mode)
 
 		{:ok, new_fsm}
 	end
@@ -138,65 +138,65 @@ defmodule Andycot.EventProcessor.User do
 	def apply_event(%AuctionUnwatched{} = event, fsm, mode) do
 		Logger.info("User #{event.user_id}   applying event AuctionUnwatched")
 
-    new_fsm = fsm |> Fsm.User.auction_unwatched(event, mode)
+		new_fsm = fsm |> Fsm.User.auction_unwatched(event, mode)
 
 		{:ok, new_fsm}
 	end
 
-  @doc """
-  Helper function used when merging two maps where we want to keep the values of the map given as the right parameter
-  """
-  def map_merge_keep_right(_k, vl, vr) do
-    vr || vl
-  end
+	@doc """
+	Helper function used when merging two maps where we want to keep the values of the map given as the right parameter
+	"""
+	def map_merge_keep_right(_k, vl, vr) do
+		vr || vl
+	end
 
-  @doc """
-  """
-  def make_user_registered_event(%RegisterUser{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(UserRegistered, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_user_registered_event(%RegisterUser{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(UserRegistered, overwrite), &map_merge_keep_right/3)
+	end
 
-  @doc """
-  """
-  def make_user_unregistered_event(%UnregisterUser{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(UserUnregistered, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_user_unregistered_event(%UnregisterUser{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(UserUnregistered, overwrite), &map_merge_keep_right/3)
+	end
 
-  @doc """
-  """
-  def make_account_activated_event(%ActivateAccount{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(AccountActivated, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_account_activated_event(%ActivateAccount{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(AccountActivated, overwrite), &map_merge_keep_right/3)
+	end
 
-  @doc """
-  """
-  def make_account_locked_event(%LockAccount{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(AccountLocked, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_account_locked_event(%LockAccount{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(AccountLocked, overwrite), &map_merge_keep_right/3)
+	end
 
-  @doc """
-  """
-  def make_account_unlocked_event(%UnlockAccount{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(AccountUnlocked, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_account_unlocked_event(%UnlockAccount{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(AccountUnlocked, overwrite), &map_merge_keep_right/3)
+	end
 
-  @doc """
-  """
-  def make_auction_watched_event(%WatchAuction{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(AuctionWatched, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_auction_watched_event(%WatchAuction{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(AuctionWatched, overwrite), &map_merge_keep_right/3)
+	end
 
-  @doc """
-  """
-  def make_watch_rejected_event(%WatchAuction{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(WatchRejected, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_watch_rejected_event(%WatchAuction{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(WatchRejected, overwrite), &map_merge_keep_right/3)
+	end
 
-  @doc """
-  """
-  def make_auction_unwatched_event(%UnwatchAuction{} = command, overwrite \\ %{}) do
-    Map.merge(command, struct(AuctionUnwatched, overwrite), &map_merge_keep_right/3)
-  end
+	@doc """
+	"""
+	def make_auction_unwatched_event(%UnwatchAuction{} = command, overwrite \\ %{}) do
+		Map.merge(command, struct(AuctionUnwatched, overwrite), &map_merge_keep_right/3)
+	end
 
 	@doc """
 	"""

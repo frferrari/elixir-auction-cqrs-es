@@ -46,7 +46,7 @@ defmodule Andycot.AuctionVariablePriceStandardTest do
 		now = now()
 
 		register_seller_command = %{	user_id: seller_id,
-																	email: "seller#{seller_id}@andycot.fr",
+																	email: "seller#{seller_id}@myweb.fr",
 																	password: "mypassword",
 																	algorithm: "sha128",
 																	salt: "mysalt",
@@ -89,7 +89,7 @@ defmodule Andycot.AuctionVariablePriceStandardTest do
 		UserSupervisor.activate_account(%ActivateAccount{user_id: fsm.data.user_id})
 
 		register_buyer_command = %{	user_id: buyer_id,
-																email: "buyer#{buyer_id}@andycot.fr",
+																email: "buyer#{buyer_id}@myweb.fr",
 																password: "mypassword",
 																algorithm: "sha128",
 																salt: "mysalt",

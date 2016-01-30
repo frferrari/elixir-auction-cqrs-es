@@ -76,70 +76,69 @@ defmodule Andycot.CommandProcessor.Auction do
 	alias Decimal, as: D
 	require Logger
 
-
 	defstart start_link(auction_id), gen_server_opts: [name: via_tuple(auction_id)] do
 
-    hibernate
+		hibernate
 
-    FsmAuction.new
-    |> replay_events(auction_id)
-    |> initial_state
+		FsmAuction.new
+		|> replay_events(auction_id)
+		|> initial_state
 
 	end
 
-  @doc """
-  """
-  defcall start_auction(%StartAuction{} = command, mode), state: fsm do
+	@doc """
+	"""
+	defcall start_auction(%StartAuction{} = command, mode), state: fsm do
 		Logger.info("Auction #{command.auction_id} Start an auction")
 
-    updated_command = if command.created_at == nil do
-      %StartAuction{command | created_at: now()}
-    else
-      command
-    end
+		updated_command = if command.created_at == nil do
+			%StartAuction{command | created_at: now()}
+		else
+			command
+		end
 
 		end_date_time = command.end_date_time || compute_end_date_time(command.start_date_time, command.listed_time_id)
 
-    new_fsm = make_auction_started_event(updated_command, %{ 	original_stock: command.stock,
+		new_fsm = make_auction_started_event(updated_command, %{ 	original_stock: command.stock,
 																															closed_by: nil,
 																															suspended_at: nil,
 																															created_at: now(),
 																															current_price: command.start_price,
 																															end_date_time: end_date_time})
-    |> apply_event(fsm, mode)
-    |> start_ticker
+		|> apply_event(fsm, mode)
+		|> start_ticker
 
 		set_and_reply(new_fsm, {:ok, new_fsm})
-  end
+	end
 
-  @doc """
-  """
-  defcall schedule_auction(%ScheduleAuction{} = command, mode), state: fsm do
+	@doc """
+	"""
+	defcall schedule_auction(%ScheduleAuction{} = command, mode), state: fsm do
 		Logger.info("Auction #{command.auction_id} Schedule an auction")
 
-    updated_command = if command.created_at == nil do
-      %ScheduleAuction{command | created_at: now()}
-    else
-      command
-    end
+		updated_command = if command.created_at == nil do
+			%ScheduleAuction{command | created_at: now()}
+		else
+			command
+		end
 
 		end_date_time = command.end_date_time || compute_end_date_time(command.start_date_time, command.listed_time_id)
 
-    new_fsm = make_auction_scheduled_event(updated_command, %{ 	original_stock: command.stock,
+		new_fsm = make_auction_scheduled_event(updated_command, %{ 	original_stock: command.stock,
 																																closed_by: nil,
 																																suspended_at: nil,
 																																created_at: now(),
 																																current_price: command.start_price,
 																																end_date_time: end_date_time})
-    |> apply_event(fsm, mode)
-    |> start_ticker
+		|> apply_event(fsm, mode)
+		|> start_ticker
 
 		set_and_reply(new_fsm, {:ok, new_fsm})
-  end
+	end
 
-  @doc """
-  """
-  defcall place_bid(%PlaceBid{} = command, mode), state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: []}} = fsm do
+	@doc """
+	"""
+	defcall place_bid(%PlaceBid{} = command, mode), state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: []}} = fsm do
 		Logger.info("Auction #{command.auction_id} Place a bid")
 
 		normalized_command = command
@@ -181,7 +180,7 @@ defmodule Andycot.CommandProcessor.Auction do
 
 			normalized_command.requested_qty != 1 ->
 				# Bidding with an erroneous qty is not allowed
-		 		{:error, make_bid_rejected_event(normalized_command, %{reason: :wrong_requested_qty})}
+				{:error, make_bid_rejected_event(normalized_command, %{reason: :wrong_requested_qty})}
 
 			fsm.data.stock < 1 ->
 				# Bidding for too many auctions is not allowed
@@ -200,11 +199,11 @@ defmodule Andycot.CommandProcessor.Auction do
 		|> maybe_restart_ticker
 
 		set_and_reply(new_fsm, {status, event, new_fsm})
-  end
+	end
 
-  @doc """
-  """
-  defcall place_bid(%PlaceBid{} = command, mode), state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: [_h|_t]}} = fsm do
+	@doc """
+	"""
+	defcall place_bid(%PlaceBid{} = command, mode), state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: [_h|_t]}} = fsm do
 		Logger.info("Auction #{command.auction_id} Place a bid")
 
 		normalized_command = command
@@ -246,7 +245,7 @@ defmodule Andycot.CommandProcessor.Auction do
 
 			normalized_command.requested_qty != 1 ->
 				# Bidding with an erroneous qty is not allowed
-		 		{:error, make_bid_rejected_event(normalized_command, %{reason: :wrong_requested_qty})}
+				{:error, make_bid_rejected_event(normalized_command, %{reason: :wrong_requested_qty})}
 
 			fsm.data.stock < 1 ->
 				# Bidding for too many auctions is not allowed
@@ -265,11 +264,11 @@ defmodule Andycot.CommandProcessor.Auction do
 		|> maybe_restart_ticker
 
 		set_and_reply(new_fsm, {status, event, new_fsm})
-  end
+	end
 
-  @doc """
-  """
-  defcall place_bid(%PlaceBid{} = command, mode), state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 2}} = fsm do
+	@doc """
+	"""
+	defcall place_bid(%PlaceBid{} = command, mode), state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 2}} = fsm do
 		Logger.info("Auction #{command.auction_id} Place a bid")
 
 		normalized_command = command
@@ -315,10 +314,10 @@ defmodule Andycot.CommandProcessor.Auction do
 
 			normalized_command.requested_qty <= 0 ->
 				# Bidding with an erroneous qty is not allowed
-		 		{:error, make_bid_rejected_event(normalized_command, %{reason: :wrong_requested_qty})}
+				{:error, make_bid_rejected_event(normalized_command, %{reason: :wrong_requested_qty})}
 
-		 	normalized_command.max_value != fsm.data.current_price ->
-			 	# Bidding with a price that is not equal to the auction price is not allowed
+			normalized_command.max_value != fsm.data.current_price ->
+				# Bidding with a price that is not equal to the auction price is not allowed
 				{:error, make_bid_rejected_event(normalized_command, %{reason: :wrong_bid_price})}
 
 			true ->
@@ -346,15 +345,15 @@ defmodule Andycot.CommandProcessor.Auction do
 				set_and_reply(new_fsm, {status, event, new_fsm}, :hibernate)
 		end
 
-  end
+	end
 
-  @doc """
-  Handler for the close_auction command. An auction might be closed from the started or scheduled state only.
-  Only the auction's owner ot the system users are allowed to close an auction.
-  Restrictions applies, i.e. an auction might not be closed when holding bids or during the last N minutes
-  before the auction's end.
-  """
-  defcall close_auction(%CloseAuction{} = command, mode), state: fsm do
+	@doc """
+	Handler for the close_auction command. An auction might be closed from the started or scheduled state only.
+	Only the auction's owner ot the system users are allowed to close an auction.
+	Restrictions applies, i.e. an auction might not be closed when holding bids or during the last N minutes
+	before the auction's end.
+	"""
+	defcall close_auction(%CloseAuction{} = command, mode), state: fsm do
 		Logger.info("Auction #{command.auction_id} Closing an auction")
 
 		{status, event} = cond do
@@ -383,7 +382,7 @@ defmodule Andycot.CommandProcessor.Auction do
 				# The seller is allowed to close its auctions
 				{:ok, make_auction_closed_event(command, %{})}
 
-		  true ->
+			true ->
 				{:error, make_close_rejected_event(command, %{reason: :not_owner_or_system})}
 
 		end
@@ -393,13 +392,13 @@ defmodule Andycot.CommandProcessor.Auction do
 
 		set_and_reply(new_fsm, {status, event, new_fsm})
 
-  end
+	end
 
-  @doc """
-  Handler for the suspend_auction command. An auction might be suspended from the started or scheduled state only.
-  Only the system users are allowed to suspend an auction.
-  """
-  defcall suspend_auction(%SuspendAuction{} = command, mode), state: fsm do
+	@doc """
+	Handler for the suspend_auction command. An auction might be suspended from the started or scheduled state only.
+	Only the system users are allowed to suspend an auction.
+	"""
+	defcall suspend_auction(%SuspendAuction{} = command, mode), state: fsm do
 		Logger.info("Auction #{command.auction_id} Suspending an auction")
 
 		{status, event} = cond do
@@ -410,7 +409,7 @@ defmodule Andycot.CommandProcessor.Auction do
 			command.suspended_by == UserEvent.get_suspended_by_system ->
 				{:ok, make_auction_suspended_event(command, %{})}
 
-		  true ->
+			true ->
 				{:error, make_suspend_rejected_event(command, %{reason: :not_allowed})}
 
 		end
@@ -428,23 +427,23 @@ defmodule Andycot.CommandProcessor.Auction do
 
 		set_and_reply(new_fsm, {status, event, new_fsm})
 
-  end
+	end
 
-  @doc """
-  Handler for the renew_auction command. An auction might be renewed from the closed state only.
-  Only the auction's owner and the system users are allowed to renew an auction.
-  An auction might be cloNed to be renewed.
-  """
-  defcall renew_auction(%RenewAuction{} = command, mode), state: fsm do
+	@doc """
+	Handler for the renew_auction command. An auction might be renewed from the closed state only.
+	Only the auction's owner and the system users are allowed to renew an auction.
+	An auction might be cloNed to be renewed.
+	"""
+	defcall renew_auction(%RenewAuction{} = command, mode), state: fsm do
 		Logger.info("Auction #{command.auction_id} Renewing an auction")
 
 		new_created_at 			= command.created_at || now()
 		new_start_date_time = command.start_date_time || new_created_at
 		new_end_date_time 	= command.end_date_time || compute_end_date_time(new_start_date_time, fsm.data.listed_time_id)
 
-    updated_command 		= %RenewAuction{command | created_at: new_created_at, 
-    																							start_date_time: new_start_date_time, 
-    																							end_date_time: new_end_date_time}
+		updated_command 		= %RenewAuction{command | created_at: new_created_at, 
+																									start_date_time: new_start_date_time, 
+																									end_date_time: new_end_date_time}
 
 		{status, updated_fsm, event} = cond do
 
@@ -470,20 +469,20 @@ defmodule Andycot.CommandProcessor.Auction do
 
 		set_and_reply(new_fsm, {status, event, new_fsm})
 
-  end
+	end
 
-  @doc """
-  Handler for the resume_auction command. An auction might be resumed from the suspended state only.
-  Only the auction's owner and the system users are allowed to resume an auction.
-  """
-  defcall resume_auction(%ResumeAuction{} = command, mode), state: fsm do
+	@doc """
+	Handler for the resume_auction command. An auction might be resumed from the suspended state only.
+	Only the auction's owner and the system users are allowed to resume an auction.
+	"""
+	defcall resume_auction(%ResumeAuction{} = command, mode), state: fsm do
 		Logger.info("Auction #{command.auction_id} Resuming an auction")
 
 		new_created_at 			= command.created_at || now()
 		new_start_date_time = command.start_date_time || new_created_at
 		new_end_date_time 	= command.end_date_time || compute_end_date_time(new_start_date_time, fsm.data.listed_time_id)
 
-    updated_command = %ResumeAuction{command | created_at: new_created_at, start_date_time: new_start_date_time, end_date_time: new_end_date_time}
+		updated_command = %ResumeAuction{command | created_at: new_created_at, start_date_time: new_start_date_time, end_date_time: new_end_date_time}
 
 		{status, event} = cond do
 
@@ -496,7 +495,7 @@ defmodule Andycot.CommandProcessor.Auction do
 			updated_command.resumed_by == fsm.data.seller_id ->
 				{:ok, make_auction_resumed_event(updated_command, %{})}
 
-		  true ->
+			true ->
 				{:error, make_resume_rejected_event(updated_command, %{reason: :not_owner_or_system})}
 
 		end
@@ -514,44 +513,44 @@ defmodule Andycot.CommandProcessor.Auction do
 
 		set_and_reply(new_fsm, {status, event, new_fsm})
 
-  end
+	end
 
-  @doc """
-  Handler for the scheduling_auction_ticker timer. This timer is used to change the
-  auction's state from :scheduled to :started and can only be received while in the
-  :scheduled state.
-  """
-  defhandleinfo :scheduling_auction_ticker, state: %FsmAuction{state: :scheduled} = fsm do
+	@doc """
+	Handler for the scheduling_auction_ticker timer. This timer is used to change the
+	auction's state from :scheduled to :started and can only be received while in the
+	:scheduled state.
+	"""
+	defhandleinfo :scheduling_auction_ticker, state: %FsmAuction{state: :scheduled} = fsm do
 
 		Logger.info("Auction #{fsm.data.auction_id} Processing scheduling_auction_ticker")
 
-  	make_auction_started_event(struct(StartAuction, Map.from_struct(fsm.data)))
-    |> apply_event(fsm)
-    |> start_ticker
-    |> maybe_new_state_hibernate
+		make_auction_started_event(struct(StartAuction, Map.from_struct(fsm.data)))
+		|> apply_event(fsm)
+		|> start_ticker
+		|> maybe_new_state_hibernate
 
-  end
+	end
 
-  defhandleinfo :scheduling_auction_ticker, state: fsm do
+	defhandleinfo :scheduling_auction_ticker, state: fsm do
 
 		Logger.error("Auction #{fsm.data.auction_id} scheduling_auction_ticker received while in state #{fsm.state}")
 		IO.inspect fsm
 		noreply
 
-  end
+	end
 
-  @doc """
-  Handler for the closing_auction_ticker timer. This timer is fired when the auction's end_date_time happens.
-  It is used to change the auction's state from started to close or sold based on different conditions, mainly
-  whether or not there are bids placed on the auction.
-  """
-  defhandleinfo :closing_auction_ticker, state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: []}} = fsm do
+	@doc """
+	Handler for the closing_auction_ticker timer. This timer is fired when the auction's end_date_time happens.
+	It is used to change the auction's state from started to close or sold based on different conditions, mainly
+	whether or not there are bids placed on the auction.
+	"""
+	defhandleinfo :closing_auction_ticker, state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: []}} = fsm do
 		Logger.info("Auction #{fsm.data.auction_id} Handling the closing_auction_ticker (VP/no bids)")
 
 		cond do
 
 			fsm.state != :started ->
-	  		Logger.error("Auction #{fsm.data.auction_id} closing_auction_ticker received while in state #{fsm.state}")
+				Logger.error("Auction #{fsm.data.auction_id} closing_auction_ticker received while in state #{fsm.state}")
 				noreply
 
 			fsm.data.end_date_time > now() ->
@@ -587,11 +586,11 @@ defmodule Andycot.CommandProcessor.Auction do
 
 		end
 
-  end
+	end
 
-  @doc """
-  """
-  defhandleinfo :closing_auction_ticker, state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: [_h|_t]}} = fsm do
+	@doc """
+	"""
+	defhandleinfo :closing_auction_ticker, state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 1, bids: [_h|_t]}} = fsm do
 		Logger.info("Auction #{fsm.data.auction_id} Handling the closing_auction_ticker (VP/w/bids)")
 
 		now = now()
@@ -603,7 +602,7 @@ defmodule Andycot.CommandProcessor.Auction do
 		cond do
 
 			fsm.state != :started ->
-	  		Logger.error("Auction #{fsm.data.auction_id} closing_auction_ticker received while in state #{fsm.state}")
+				Logger.error("Auction #{fsm.data.auction_id} closing_auction_ticker received while in state #{fsm.state}")
 				noreply
 
 			fsm.data.end_date_time > now ->
@@ -618,15 +617,15 @@ defmodule Andycot.CommandProcessor.Auction do
 					# A duplicate auction command is returned for an auction with a stock equal to the current auction stock - 1
 					clone_auction_start_date_time = now
 					clone_auction_end_date_time = compute_end_date_time(clone_auction_start_date_time, fsm.data.listed_time_id)
-		 			clone_auction_command = struct(	CreateAuction, 
-		 																					Map.merge(Map.from_struct(fsm.data), 
-		 																										%{auction_id: nil,
+					clone_auction_command = struct(	CreateAuction, 
+																							Map.merge(Map.from_struct(fsm.data), 
+																												%{auction_id: nil,
 																													cloned_from_auction_id: fsm.data.auction_id,
 																													stock: fsm.data.stock-1,
 																													start_date_time: clone_auction_start_date_time,
 																													end_date_time: clone_auction_end_date_time},
 																												&map_merge_keep_right/3)
-		 																				)
+																						)
 					{:ok, cloned_auction_fsm} = AuctionSupervisor.clone_auction(clone_auction_command)
 					put_in(fsm.data.cloned_to_auction_id, cloned_auction_fsm.data.auction_id)
 				else
@@ -649,15 +648,15 @@ defmodule Andycot.CommandProcessor.Auction do
 					# A clone auction is created with a stock equal to the current auction stock - 1
 					clone_auction_start_date_time = now
 					clone_auction_end_date_time = compute_end_date_time(clone_auction_start_date_time, fsm.data.listed_time_id)
-		 			clone_auction_command = struct(	CreateAuction, 
- 																					Map.merge(Map.from_struct(fsm.data), 
- 																										%{auction_id: nil,
+					clone_auction_command = struct(	CreateAuction, 
+																					Map.merge(Map.from_struct(fsm.data), 
+																										%{auction_id: nil,
 																											cloned_from_auction_id: fsm.data.auction_id,
 																											stock: fsm.data.stock-1,
 																											start_date_time: clone_auction_start_date_time,
 																											end_date_time: clone_auction_end_date_time},
 																										&map_merge_keep_right/3)
- 																				)
+																				)
 					{:ok, cloned_auction_fsm} = AuctionSupervisor.clone_auction(clone_auction_command)
 					put_in(fsm.data.cloned_to_auction_id, cloned_auction_fsm.data.auction_id)
 				else
@@ -680,15 +679,15 @@ defmodule Andycot.CommandProcessor.Auction do
 				# This allows us to keep track of the list of bids that did not met the reserve price
 				clone_auction_start_date_time = now
 				clone_auction_end_date_time = compute_end_date_time(clone_auction_start_date_time, fsm.data.listed_time_id)
-	 			clone_auction_command = struct(	CreateAuction, 
-	 																					Map.merge(Map.from_struct(fsm.data), 
-	 																										%{auction_id: nil,
+				clone_auction_command = struct(	CreateAuction, 
+																						Map.merge(Map.from_struct(fsm.data), 
+																											%{auction_id: nil,
 																												cloned_from_auction_id: fsm.data.auction_id,
 																												renewal_count: fsm.data.renewal_count+1,
 																												start_date_time: clone_auction_start_date_time,
 																												end_date_time: clone_auction_end_date_time},
 																											&map_merge_keep_right/3)
-	 																				)
+																					)
 				{:ok, cloned_auction_fsm} = AuctionSupervisor.clone_auction(clone_auction_command)
 				new_fsm = put_in(fsm.data.cloned_to_auction_id, cloned_auction_fsm.data.auction_id)
 
@@ -716,17 +715,17 @@ defmodule Andycot.CommandProcessor.Auction do
 
 		end
 
-  end
+	end
 
-  @doc """
-  """
-  defhandleinfo :closing_auction_ticker, state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 2}} = fsm do
+	@doc """
+	"""
+	defhandleinfo :closing_auction_ticker, state: %FsmAuction{data: %FsmAuctionData{sale_type_id: 2}} = fsm do
 		Logger.info("Auction #{fsm.data.auction_id} Handling the closing_auction_ticker (FP)")
 
 		cond do
 
 			fsm.state != :started ->
-	  		Logger.error("Auction #{fsm.data.auction_id} closing_auction_ticker received while in state #{fsm.state}")
+				Logger.error("Auction #{fsm.data.auction_id} closing_auction_ticker received while in state #{fsm.state}")
 				noreply
 
 			fsm.data.end_date_time > now() ->
@@ -777,41 +776,41 @@ defmodule Andycot.CommandProcessor.Auction do
 
 		end
 
-  end
+	end
 
-  @doc """
-  """
-  defcast increment_watch_count(auction_id, mode), state: fsm do
+	@doc """
+	"""
+	defcast increment_watch_count(auction_id, mode), state: fsm do
 		Logger.info("Auction #{auction_id} Increment the watch_count")
 
-  	make_watch_count_incremented_event(auction_id)
-    |> apply_event(fsm)
-    |> new_state
-  end
+		make_watch_count_incremented_event(auction_id)
+		|> apply_event(fsm)
+		|> new_state
+	end
 
-  @doc """
-  """
-  defcast decrement_watch_count(auction_id, mode), state: fsm do
+	@doc """
+	"""
+	defcast decrement_watch_count(auction_id, mode), state: fsm do
 		Logger.info("Auction #{auction_id} Decrement the watch count")
 
-  	make_watch_count_decremented_event(auction_id)
-    |> apply_event(fsm)
-    |> new_state
-  end
+		make_watch_count_decremented_event(auction_id)
+		|> apply_event(fsm)
+		|> new_state
+	end
 
-  @doc """
-  """
-  defcast increment_visit_count(auction_id, mode), state: fsm do
+	@doc """
+	"""
+	defcast increment_visit_count(auction_id, mode), state: fsm do
 		Logger.info("Auction #{auction_id} Increment the visit count")
 
-  	make_visit_count_incremented_event(auction_id)
-    |> apply_event(fsm)
-    |> new_state
-  end
+		make_visit_count_incremented_event(auction_id)
+		|> apply_event(fsm)
+		|> new_state
+	end
 
-  @doc """
-  """
-  defcall get_auction(auction_id, as_fsm), state: fsm do
+	@doc """
+	"""
+	defcall get_auction(auction_id, as_fsm), state: fsm do
 		Logger.info("Auction #{auction_id} Get an auction")
 
 		if as_fsm == true do
@@ -819,13 +818,13 @@ defmodule Andycot.CommandProcessor.Auction do
 		else
 			reply({:ok, fsm.data})
 		end
-  end
+	end
 
-  @doc """
-  Most of the time an auction might be hibernated, but not when in the :started state and when
+	@doc """
+	Most of the time an auction might be hibernated, but not when in the :started state and when
 	running its last hour life-time.
-  """
-  def maybe_new_state_hibernate(%FsmAuction{} = fsm) do
+	"""
+	def maybe_new_state_hibernate(%FsmAuction{} = fsm) do
 		remaining_seconds = fsm.data.end_date_time - now()
 
 		if fsm.state == :started and remaining_seconds < 3600 do
@@ -835,7 +834,7 @@ defmodule Andycot.CommandProcessor.Auction do
 			fsm
 			|> new_state(:hibernate)
 		end
-  end
+	end
 
 	@doc """
 	An auction can be ended early only when not holding bids and not during its last 12 hours.
@@ -898,18 +897,18 @@ defmodule Andycot.CommandProcessor.Auction do
 	"""
 	def normalize_value_not_used(value, bid_up) do
 		# Float.round(Float.floor(value/bid_up)*bid_up,2)
-  end
+	end
 
 	def normalize_value(value, bid_up) do
-    # {f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.mult(D.div_int(D.new(value), D.new(bid_up)), D.new(bid_up)) end)
-    {integer_part, _} = D.div(D.new(value), D.new(bid_up)) |> D.to_string(:normal) |> Integer.parse
+		# {f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.mult(D.div_int(D.new(value), D.new(bid_up)), D.new(bid_up)) end)
+		{integer_part, _} = D.div(D.new(value), D.new(bid_up)) |> D.to_string(:normal) |> Integer.parse
 
-    {f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.mult(D.new(integer_part), D.new(bid_up)) end)
-    |> D.to_string(:normal)
-    |> Float.parse
+		{f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.mult(D.new(integer_part), D.new(bid_up)) end)
+		|> D.to_string(:normal)
+		|> Float.parse
 
-    f
-  end
+		f
+	end
 
 	@doc """
 	Generates a unique worker id
@@ -1004,25 +1003,25 @@ defmodule Andycot.CommandProcessor.Auction do
 		start_date_time + get_days_given_listed_time_id(listed_time_id) * (60 * 60 * 24)
 	end
 
-  @doc """
-  """
-  def whereis(auction_id) do
-    worker_name(auction_id)
-    |> :global.whereis_name
-  end
+	@doc """
+	"""
+	def whereis(auction_id) do
+		worker_name(auction_id)
+		|> :global.whereis_name
+	end
 
-  @doc """
-  """
-  def via_tuple(auction_id) do
-    {:global, worker_name(auction_id)}
-  end
+	@doc """
+	"""
+	def via_tuple(auction_id) do
+		{:global, worker_name(auction_id)}
+	end
 
-  @doc """
-  Generates a unique worker name
-  """
-  def worker_name(auction_id) do
-    {:auction_worker, auction_id}
-  end
+	@doc """
+	Generates a unique worker name
+	"""
+	def worker_name(auction_id) do
+		{:auction_worker, auction_id}
+	end
 
 
 end

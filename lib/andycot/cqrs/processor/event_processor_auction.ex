@@ -123,7 +123,7 @@ defmodule Andycot.EventProcessor.Auction do
 		|> FsmAuction.bid_placed(event, mode)
 
 		if new_fsm.data.clone_parameters != nil do
- 			cloned_fsm_data = %FsmAuctionData{new_fsm.data | 	auction_id: nil,
+			cloned_fsm_data = %FsmAuctionData{new_fsm.data | 	auction_id: nil,
 																												cloned_from_auction_id: new_fsm.data.auction_id,
 																												stock: new_fsm.data.clone_parameters.stock, 
 																												end_date_time: new_fsm.data.clone_parameters.end_date_time}
@@ -171,8 +171,8 @@ defmodule Andycot.EventProcessor.Auction do
 		|> FsmAuction.auction_renewed(event, mode)
 
 		if new_fsm.data.clone_parameters != nil do
- 			cloned_fsm_data = %FsmAuctionData{new_fsm.data | 	auction_id: nil,
-																									 			closed_by: nil,
+			cloned_fsm_data = %FsmAuctionData{new_fsm.data | 	auction_id: nil,
+																												closed_by: nil,
 																												cloned_from_auction_id: new_fsm.data.auction_id,
 																												stock: new_fsm.data.clone_parameters.stock, 
 																												start_date_time: new_fsm.data.clone_parameters.start_date_time,
@@ -213,8 +213,8 @@ defmodule Andycot.EventProcessor.Auction do
 		|> FsmAuction.auction_resumed(event, mode)
 
 		if new_fsm.data.clone_parameters != nil do
- 			cloned_fsm_data = %FsmAuctionData{new_fsm.data | 	auction_id: nil,
-																									 			closed_by: nil,
+			cloned_fsm_data = %FsmAuctionData{new_fsm.data | 	auction_id: nil,
+																												closed_by: nil,
 																												cloned_from_auction_id: new_fsm.data.auction_id,
 																												stock: new_fsm.data.clone_parameters.stock, 
 																												start_date_time: new_fsm.data.clone_parameters.start_date_time,
@@ -404,12 +404,12 @@ defmodule Andycot.EventProcessor.Auction do
 
 	@doc """
 	"""
-  def add_amounts(value, bid_up) do
-  	{f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.add(D.new(value), D.new(bid_up)) end)
-  	|> D.to_string
-  	|> Float.parse
+	def add_amounts(value, bid_up) do
+		{f, _} = D.with_context(%D.Context{precision: 9, rounding: :half_up}, fn -> D.add(D.new(value), D.new(bid_up)) end)
+		|> D.to_string
+		|> Float.parse
 
-  	f
-  end
+		f
+	end
 
 end

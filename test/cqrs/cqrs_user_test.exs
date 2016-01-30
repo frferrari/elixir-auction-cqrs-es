@@ -13,7 +13,7 @@ defmodule Cqrs.User.Test do
 						email1: "contact1@andycot.fr",
 						email2: "contact2@andycot.fr",
 						register_user_command: %{	user_id: nil,
-																			email: "contact@andycot.fr",
+																			email: "contact@myweb.fr",
 																			password: "mypassword",
 																			algorithm: "sha128",
 																			salt: "mysalt",
