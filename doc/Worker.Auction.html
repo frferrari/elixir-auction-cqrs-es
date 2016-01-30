@@ -1,0 +1,960 @@
+    <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.11.2">
+    <title>Worker.Auction – andycot v0.0.1</title>
+    <link rel="stylesheet" href="dist/app-feafe9a25b.css" />
+    <script src="dist/sidebar_items.js"></script>
+  </head>
+  <body data-type="modules">
+
+    <div class="main">
+<button class="sidebar-toggle">
+  <i class="icon-menu"></i>
+</button>
+<section class="sidebar">
+  <button class="sidebar-toggle">
+    <i class="icon-menu"></i>
+  </button>
+
+  
+  <a href="api-reference.html" class="sidebar-projectLink">
+    <div class="sidebar-projectDetails">
+      <h1 class="sidebar-projectName">
+        andycot
+      </h1>
+      <h2 class="sidebar-projectVersion">
+        v0.0.1
+      </h2>
+    </div>
+    
+  </a>
+
+  <div class="sidebar-search">
+    <i class="icon-search"></i>
+    <input type="text" class="sidebar-searchInput" placeholder="search" autocomplete="off" />
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+    
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+    
+
+    
+
+    
+  </ul>
+
+  <ul id="full-list" class="sidebar-fullList"></ul>
+  <div class="sidebar-noResults"></div>
+</section>
+
+<section class="content">
+  <div id="content" class="content-inner">
+
+
+      <h1>
+        <small class="visible-xs">andycot v0.0.1</small>
+        Worker.Auction
+        
+        
+      </h1>
+
+      
+        <section id="moduledoc" class="docstring">
+          <p>A worker to manage the state and persistence of an auction using <a href="http://elixir-lang.org/docs/master/elixir/GenServer.html">gen_server</a></p>
+<p>It works in three different modes :</p>
+<pre><code class="elixir">* `:legacy` used during the migration phase (andycot v1 to v2)
+* `:replay` used when restarting the system, created the workers and replays the events
+* `:standard` used during the as-asual web-site activity</code></pre>
+<p>It handles and generates the following <code class="inline">Commands</code> and <code class="inline">Events</code></p>
+<pre><code class="elixir">:create_auction_command             :auction_created_event
+:place_bid_command                      :bid_placed_event
+:close_auction_command              :auction_closed_event</code></pre>
+<p>The following commands can be issued for testing purposes</p>
+<pre><code class="elixir">Sale type 1 with automatic_renewal = true
+    Autogenerate auction_id and place a bid
+    Supervisor.Auction.create_auction(%Command.CreateAuction{seller_id: 269, sale_type_id: 1, listed_time_id: 1, start_date_time: Andycot.Tools.Timestamp.now(), end_date_time: Andycot.Tools.Timestamp.now()+10, start_price: 1.00, bid_up: 0.10, stock: 1}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 260, requested_qty: 1, max_value: 1.00, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+
+Sale type 1 with automatic_renewal = false and stock = 1 and reserve_price = nil
+    Autogenerate auction_id and place a bid
+    Supervisor.Auction.create_auction(%Command.CreateAuction{seller_id: 269, sale_type_id: 1, listed_time_id: 1, start_date_time: Andycot.Tools.Timestamp.now(), end_date_time: Andycot.Tools.Timestamp.now()+240, start_price: 1.00, bid_up: 0.10, stock: 1}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 260, requested_qty: 1, max_value: 2.00, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 261, requested_qty: 1, max_value: 1.30, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 260, requested_qty: 1, max_value: 3.00, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 262, requested_qty: 1, max_value: 2.50, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 261, requested_qty: 1, max_value: 3.00, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+
+Sale type 1 with automatic_renewal = true and stock = 4 and reserve_price = nil
+    Autogenerate auction_id and place a bid
+    Supervisor.Auction.create_auction(%Command.CreateAuction{seller_id: 269, sale_type_id: 1, listed_time_id: 1, start_date_time: Andycot.Tools.Timestamp.now(), end_date_time: Andycot.Tools.Timestamp.now()+20, start_price: 1.00, bid_up: 0.10, stock: 4}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 260, requested_qty: 1, max_value: 1.40, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+
+Sale type 1 with automatic_renewal = true and reserve_price not met
+    Supervisor.Auction.create_auction(%Command.CreateAuction{seller_id: 269, sale_type_id: 1, listed_time_id: 1, start_date_time: Andycot.Tools.Timestamp.now(), end_date_time: Andycot.Tools.Timestamp.now()+30, start_price: 1.00, bid_up: 0.10, stock: 1, reserve_price: 2.00}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 260, requested_qty: 1, max_value: 1.80, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 262, requested_qty: 1, max_value: 1.90, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+
+Sale type 1 with automatic_renewal = false
+    Supervisor.Auction.start_worker(%Worker.Auction{auction_id: 100, seller_id: 269, sale_type_id: 1, listed_time_id: 1, is_closed: false, start_date_time: Andycot.Tools.Timestamp.now(), end_date_time: Andycot.Tools.Timestamp.now()+30, is_suspended: false, start_price: 1.00, current_price: 1.00, bid_up: 0.10, stock: 1, type_id: 1, automatic_renewal: false}, :standard)
+
+Sale type 2 with automatic_renewal = true
+    Supervisor.Auction.create_auction(%Command.CreateAuction{seller_id: 269, sale_type_id: 2, listed_time_id: 1, start_date_time: Andycot.Tools.Timestamp.now(), end_date_time: Andycot.Tools.Timestamp.now()+10, start_price: 1.00, bid_up: 0.10, stock: 1}, :standard)
+    Supervisor.Auction.place_bid(%Command.PlaceBid{auction_id: 1, bidder_id: 260, requested_qty: 1, max_value: 1.00, created_at: Andycot.Tools.Timestamp.now()}, :standard)
+
+Sale type 2 with automatic_renewal = false
+    Supervisor.Auction.start_worker(%Worker.Auction{auction_id: 100, seller_id: 269, sale_type_id: 2, listed_time_id: 1, is_closed: false, start_date_time: Andycot.Tools.Timestamp.now(), end_date_time: Andycot.Tools.Timestamp.now()+30, is_suspended: false, start_price: 1.00, current_price: 1.00, bid_up: 0.10, stock: 10, automatic_renewal: false, type_id: 1}, :standard)</code></pre>
+
+        </section>
+      
+
+      
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <i class="icon-link"></i>
+            </a>
+            Summary
+          </h1>
+          
+
+          
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#add_amounts/2">add_amounts(value, bid_up)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#apply_event/3">apply_event(event, mode, auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Process the AuctionSold event</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#can_be_ended_early?/1">can_be_ended_early?(auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#clear_ticker/1">clear_ticker(auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#compute_end_date_time/2">compute_end_date_time(start_date_time, listed_time_id)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#convert_string_key_to_atom_key/1">convert_string_key_to_atom_key(the_map)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#get_days_given_listed_time_id/1">get_days_given_listed_time_id(listed_time_id)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#handle_call/3">handle_call(msg, from, state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Used for debug purposes</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#handle_info/2">handle_info(arg1, state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Handles the ticker message used to check if an auction of fixed price has ended and update its status,
+eventually sending emails to the buyer and the seller, updating the quote</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#init/1">init(args)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_auction_cancelled_event/2">make_auction_cancelled_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_auction_closed_event/2">make_auction_closed_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_auction_created_event/2">make_auction_created_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_auction_renewed_event/2">make_auction_renewed_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_auction_sold_event/2">make_auction_sold_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_bid_from_event/2">make_bid_from_event(bid_placed, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_bid_placed_event/2">make_bid_placed_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_bid_rejected_event/2">make_bid_rejected_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_cancel_rejected_event/2">make_cancel_rejected_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_close_rejected_event/2">make_close_rejected_event(command, overwrite)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#make_worker_id/1">make_worker_id(auction_id)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Generates a unique worker id</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#map_merge_keep_right/3">map_merge_keep_right(k, vl, vr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Helper function used when merging two maps where we want to keep the values of the map given as the right parameter</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#maybe_extend_time/1">maybe_extend_time(auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#normalize_command/2">normalize_command(command, bid_up)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#normalize_value/2">normalize_value(value, bid_up)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#process_command/3">process_command(command, mode, auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Process the CancelAuction command</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#process_ticker/1">process_ticker(auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Process the ticker message on a fixed price auction</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#replay_events/1">replay_events(auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Replays all events except the AuctionCreated event
+Used in the <code class="inline">:replay</code> mode</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#replay_next_event/2">replay_next_event(list, auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Handles the replay of the next event
+Helps to stop the recursion when the list of events to replay is empty</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#reply_maybe_hibernate/2">reply_maybe_hibernate(auction_state, reply)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Handles the hibernation of our auction processes depending on the remaining time until the auction’s end
+Goes to hibernation if the remaining time is more than 1 hour</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#start_link/2">start_link(auction, mode)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#start_ticker/2">start_ticker(auction, pid \\ nil)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Schedules a timer that will fire at the auctions’s end time</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#stop_ticker/1">stop_ticker(auction_state)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#update_auction_state/3">update_auction_state(auction_state, new_current_price, new_bids)</a>
+  </div>
+  
+    <div class="summary-synopsis"></div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#via_tuple/1">via_tuple(auction_id)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Generates a unique worker name</p>
+</div>
+  
+</div>
+
+  </div>
+
+
+          
+
+          
+
+        </section>
+      
+
+      
+
+      
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <i class="icon-link"></i>
+            </a>
+            Functions
+          </h1>
+          <div class="detail" id="add_amounts/2">
+  <div class="detail-header">
+    <a href="#add_amounts/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">add_amounts(value, bid_up)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="apply_event/3">
+  <div class="detail-header">
+    <a href="#apply_event/3" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">apply_event(event, mode, auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Process the AuctionSold event</p>
+<p>Returns:
+{ :ack, :auction_sold}</p>
+
+  </section>
+</div>
+<div class="detail" id="can_be_ended_early?/1">
+  <div class="detail-header">
+    <a href="#can_be_ended_early?/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">can_be_ended_early?(auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="clear_ticker/1">
+  <div class="detail-header">
+    <a href="#clear_ticker/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">clear_ticker(auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="compute_end_date_time/2">
+  <div class="detail-header">
+    <a href="#compute_end_date_time/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">compute_end_date_time(start_date_time, listed_time_id)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="convert_string_key_to_atom_key/1">
+  <div class="detail-header">
+    <a href="#convert_string_key_to_atom_key/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">convert_string_key_to_atom_key(the_map)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="get_days_given_listed_time_id/1">
+  <div class="detail-header">
+    <a href="#get_days_given_listed_time_id/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">get_days_given_listed_time_id(listed_time_id)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="handle_call/3">
+  <div class="detail-header">
+    <a href="#handle_call/3" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">handle_call(msg, from, state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Used for debug purposes</p>
+
+  </section>
+</div>
+<div class="detail" id="handle_info/2">
+  <div class="detail-header">
+    <a href="#handle_info/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">handle_info(arg1, state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Handles the ticker message used to check if an auction of fixed price has ended and update its status,
+eventually sending emails to the buyer and the seller, updating the quote …</p>
+
+  </section>
+</div>
+<div class="detail" id="init/1">
+  <div class="detail-header">
+    <a href="#init/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">init(args)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_auction_cancelled_event/2">
+  <div class="detail-header">
+    <a href="#make_auction_cancelled_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_auction_cancelled_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_auction_closed_event/2">
+  <div class="detail-header">
+    <a href="#make_auction_closed_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_auction_closed_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_auction_created_event/2">
+  <div class="detail-header">
+    <a href="#make_auction_created_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_auction_created_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_auction_renewed_event/2">
+  <div class="detail-header">
+    <a href="#make_auction_renewed_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_auction_renewed_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_auction_sold_event/2">
+  <div class="detail-header">
+    <a href="#make_auction_sold_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_auction_sold_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_bid_from_event/2">
+  <div class="detail-header">
+    <a href="#make_bid_from_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_bid_from_event(bid_placed, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_bid_placed_event/2">
+  <div class="detail-header">
+    <a href="#make_bid_placed_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_bid_placed_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_bid_rejected_event/2">
+  <div class="detail-header">
+    <a href="#make_bid_rejected_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_bid_rejected_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_cancel_rejected_event/2">
+  <div class="detail-header">
+    <a href="#make_cancel_rejected_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_cancel_rejected_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_close_rejected_event/2">
+  <div class="detail-header">
+    <a href="#make_close_rejected_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_close_rejected_event(command, overwrite)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="make_worker_id/1">
+  <div class="detail-header">
+    <a href="#make_worker_id/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">make_worker_id(auction_id)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Generates a unique worker id</p>
+
+  </section>
+</div>
+<div class="detail" id="map_merge_keep_right/3">
+  <div class="detail-header">
+    <a href="#map_merge_keep_right/3" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">map_merge_keep_right(k, vl, vr)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Helper function used when merging two maps where we want to keep the values of the map given as the right parameter</p>
+
+  </section>
+</div>
+<div class="detail" id="maybe_extend_time/1">
+  <div class="detail-header">
+    <a href="#maybe_extend_time/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">maybe_extend_time(auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="normalize_command/2">
+  <div class="detail-header">
+    <a href="#normalize_command/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">normalize_command(command, bid_up)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="normalize_value/2">
+  <div class="detail-header">
+    <a href="#normalize_value/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">normalize_value(value, bid_up)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="process_command/3">
+  <div class="detail-header">
+    <a href="#process_command/3" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">process_command(command, mode, auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Process the CancelAuction command</p>
+<p>Returns:
+{ :nack, :not_owner_or_system}  only the seller or the system (0) are allowed to cancel an auction
+{ :nack, :too_late}                             an auction having bids can only be cancelled before a certain time limit</p>
+<p>{ :ack, :auction_cancelled}             upon successfull cancelation</p>
+
+  </section>
+</div>
+<div class="detail" id="process_ticker/1">
+  <div class="detail-header">
+    <a href="#process_ticker/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">process_ticker(auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Process the ticker message on a fixed price auction</p>
+<p>Returns :
+{ :nack, :auction_has_not_ended}
+{ :nack, :auction_cancelled}</p>
+<p>{ :ack, :auction_closed_no_bids_no_automatic_renewal}
+{ :ack, :auction_sold}
+{ :ack, :renew_auction}</p>
+
+  </section>
+</div>
+<div class="detail" id="replay_events/1">
+  <div class="detail-header">
+    <a href="#replay_events/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">replay_events(auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Replays all events except the AuctionCreated event
+Used in the <code class="inline">:replay</code> mode</p>
+
+  </section>
+</div>
+<div class="detail" id="replay_next_event/2">
+  <div class="detail-header">
+    <a href="#replay_next_event/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">replay_next_event(list, auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Handles the replay of the next event
+Helps to stop the recursion when the list of events to replay is empty</p>
+
+  </section>
+</div>
+<div class="detail" id="reply_maybe_hibernate/2">
+  <div class="detail-header">
+    <a href="#reply_maybe_hibernate/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">reply_maybe_hibernate(auction_state, reply)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Handles the hibernation of our auction processes depending on the remaining time until the auction’s end
+Goes to hibernation if the remaining time is more than 1 hour</p>
+
+  </section>
+</div>
+<div class="detail" id="start_link/2">
+  <div class="detail-header">
+    <a href="#start_link/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">start_link(auction, mode)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="start_ticker/2">
+  <div class="detail-header">
+    <a href="#start_ticker/2" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">start_ticker(auction, pid \\ nil)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Schedules a timer that will fire at the auctions’s end time</p>
+<p>Returns the given auction updated with the timer ref or the original
+auction if the time could not be started</p>
+
+  </section>
+</div>
+<div class="detail" id="stop_ticker/1">
+  <div class="detail-header">
+    <a href="#stop_ticker/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">stop_ticker(auction_state)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="update_auction_state/3">
+  <div class="detail-header">
+    <a href="#update_auction_state/3" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">update_auction_state(auction_state, new_current_price, new_bids)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="via_tuple/1">
+  <div class="detail-header">
+    <a href="#via_tuple/1" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">via_tuple(auction_id)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Generates a unique worker name</p>
+
+  </section>
+</div>
+
+        </section>
+      
+
+      
+
+      
+        <footer class="footer">
+      <p>
+        <span class="line">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" rel="help" target="_blank">ExDoc</a> (v0.11.2),
+        </span>
+        <span class="line">
+          designed by
+          <a href="https://twitter.com/dignifiedquire" target="_blank" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+      </p>
+      <button class="night-mode-toggle" />
+    </footer>
+  </div>
+</section>
+</div>
+  <script src="dist/app-1d1b741c5e.js"></script>
+  </body>
+</html>
+
