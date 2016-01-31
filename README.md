@@ -24,27 +24,37 @@ We want :
 
 * to give great tools to the buyers and the sellers to allow them to follow their purchases/sales, to generate invoices, to check whether they are awaiting payment, or are paid, or are shipped or received. Buyers and sellers might also be able to rate each other and to create litigation.
 
-This might seem functionalities available on other collectible websites, but some of them are not like the quote of the objects and the opportunity to give informations to the seller when they create their informations by adding a image recognition system. Developing a reactive, distributed, scalable, event driven website and using the right front-end tools like React.js or Elm would also give us tools that would help us make our website a success story.
+This might seem functionalities available on other collectible websites, but some of them are not. The quote of the objects and the opportunity to give informations to the seller when they create their auctions by adding a image recognition system are really new concepts. 
+
+Developing a reactive, distributed, scalable, event driven website and using the right front-end tools like React.js or Elm would also give us tools that would help us make our website a success story.
 
 ##Principles
 
 ###Image recognition system
 
-The image recognition system is going to use a **catalog of pictures**, we can expect more than 100.000 pictures only for stamps and this would grow each year by a magnitude of thousand. Postcards pictures would be over millions and would grow by a magnitude of 10th thousand per year.
+The image recognition system is going to use a **catalog of pictures**, we can expect more than 100.000 pictures only for stamps and this would grow each year by a magnitude of thousand. Postcard pictures would be over millions and would grow by a magnitude of 10th thousand per year.
 
 Dealing with such numbers of images is a real challenge for different reasons :
 
-* if one wants to recognize an image over a catalog of 100.000 for stamps or millionS for postcards, then the image recognition system must really be robust are FAST.
+* if one wants to recognize an image over a catalog of 100.000 for stamps or millionS for postcards, then the image recognition system must really be FAST and give back accurate results.
 
 * another problem that arises is how are we going to handle missing and new pictures and at the same time take care to not create duplicate pictures ? 
 
 ####Millions of pictures
 
-We want our image recognition API to be really FAST, it must achieve a recognition in less than 1.5 second. And it must handle this even if hundreds of users are invoking the API.
+We want our image recognition API to be really FAST, it must achieve a recognition in less than 1.5 second. And it must handle this even if hundreds of users are invoking the API. It must also be accurate and return the closest match.
+
+It must handle rotated, inclined or **slightly** altered images (stamps might be obliterated and the API should be able to handle light obliteration, heavy obliteration would not allow us to match)
 
 ####Do not duplicate me !
 
-The best way to handle a catalog of pictures of this magnitude in number of pictures is to allow the community to make proposals to add, remove, merge pictures to the catalog of pictures. Any logged in user might make a proposal and this proposal should be validated by at least a certain number of authorised users for this proposal to take place.
+We will have a backend that will allow us to add images in different ways :
+
+* batch : we would put multiple .jpg images in a directory with one .txt file containing informations related to the images like the area, the year or other informations and those images would be uploaded in our catalog automatically.
+
+* UI : we would be able to upload one picture at a time by selecting the picture on our local disk and then fill the related informations like the area, year, topics or other informations.
+
+Due to the number of pictures we will have to handle the best way to handle this is to allow the community to make proposals to add, remove, merge pictures to the catalog of pictures. Any logged in user might make a proposal and this proposal should be validated by at least a certain number of authorised users for this proposal to take place. We would be able to follow this proposals and their validations.
 
 ###Quote of objects
 
