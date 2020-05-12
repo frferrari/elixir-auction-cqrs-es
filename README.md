@@ -1,6 +1,6 @@
-#Auction website written with Elixir/OTP applying CQRS/ES principles
+# Auction website written with Elixir/OTP applying CQRS/ES principles
 
-##Introduction
+## Introduction
 
 You have been collecting stamps, postcards, coins, banknotes, playcards, photos, posters, pins to cite only few. 
 
@@ -28,9 +28,9 @@ This might seem functionalities available on other collectible websites, but som
 
 Developing a reactive, distributed, scalable, event driven website and using the right front-end tools like React.js or Elm would also give us tools that would help us make our website a success story.
 
-##Principles
+## Principles
 
-###Image recognition system
+### Image recognition system
 
 The image recognition system is going to use a **catalog of pictures**, we can expect more than 100.000 pictures only for stamps and this would grow each year by a magnitude of thousand. Postcard pictures would be over millions and would grow by a magnitude of 10th thousand per year.
 
@@ -40,13 +40,13 @@ Dealing with such numbers of images is a real challenge for different reasons :
 
 * another problem that arises is how are we going to handle missing and new pictures and at the same time take care to not create duplicate pictures ? 
 
-####Millions of pictures
+#### Millions of pictures
 
 We want our image recognition API to be really FAST, it must achieve a recognition in less than 1.5 second. And it must handle this even if hundreds of users are invoking the API. It must also be accurate and return the closest match.
 
 It must handle rotated, inclined or **slightly** altered images (stamps might be obliterated and the API should be able to handle light obliteration, heavy obliteration would not allow us to match)
 
-####Do not duplicate me !
+#### Do not duplicate me !
 
 We will have a backend that will allow us to add images in different ways :
 
@@ -56,7 +56,7 @@ We will have a backend that will allow us to add images in different ways :
 
 Due to the number of pictures we will have to handle the best way to handle this is to allow the community to make proposals to add, remove, merge pictures to the catalog of pictures. Any logged in user might make a proposal and this proposal should be validated by at least a certain number of authorised users for this proposal to take place. We would be able to follow this proposals and their validations.
 
-###Quote of objects
+### Quote of objects
 
 This is an important concept for our website and we want it to be inspired by stock market exchanges but not too close to make it comprehensible and accessible by the common mortal. 
 
